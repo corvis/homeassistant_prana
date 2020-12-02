@@ -1,0 +1,13 @@
+{
+  "domain": "prana",
+  "name": "Prana Recuperators",
+  "documentation": "",
+  "dependencies": [],
+  "codeowners": [
+    "@corvis"
+  ],
+  "requirements": [
+    "prana-rc.client>=0.3.7"
+  ],
+  "config_flow": true
+}

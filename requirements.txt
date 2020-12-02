@@ -1,0 +1,7 @@
+# Development dependencies
+copyright==1.0.1.0
+twine==1.13.0
+m2r==0.2.1
+flake8==3.8.4
+black==20.8b1
+mypy>=0.7
