@@ -26,22 +26,31 @@
   },
   "options": {
     "error": {
-      "unable_to_connect": "Unable to connect to the remote device"
+      "unable_to_connect": "Unable to connect to the remote device. See logs for details",
+      "discovery_error": "Discovery failed. See logs for more details"
     },
     "step": {
       "init": {
         "data": {
           "edit_key": "Page"
         },
-        "description": "Choose settings page to edit",
-        "title": "Prana Recuperators Options"
+        "description": "Choose existing device to edit or add a new one. \nNOTE: The discovery process might take some time (up to 10 seconds)",
+        "title": "Prana Hub Options"
       },
-      "common_settings": {
+      "edit_device": {
         "data": {
-          "default_recovery_period": ""
+          "addr": "BLE MAC Address",
+          "name": "Name"
         },
-        "title": "",
+        "title": "Device Settings",
         "description": ""
+      },
+      "discover": {
+        "data": {
+          "discovered_device": "Discovered devices"
+        },
+        "title": "Devices discovery",
+        "description": "Below are the the lis of discovered devices available for pairing. \nIf you don't see your device make sure it is turned on, located nearby and is not connected to any other device already. \nIf you still can't find yur device you can return back and add it manually by mac address."
       }
     }
   }

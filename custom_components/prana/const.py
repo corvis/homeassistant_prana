@@ -22,7 +22,9 @@
 #    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from enum import Enum
 
+# Common consts
 DOMAIN = "prana"
+PLATFORMS = ("fan",)
 
 
 class ConnectionType(Enum):
@@ -31,7 +33,28 @@ class ConnectionType(Enum):
     REMOTE_WEBSOCKET = "remore_ws"
 
 
+# Config properties
 CONF_CONNECTION_TYPE = "connection_type"
 CONF_BASE_URL = "base_url"
 
 CONNECTION_TYPE_MAP = {ConnectionType.REMOTE_HTTP_SERVER: "HTTP"}
+
+# Options
+OPT_DEVICES = "devices"
+OPT_DEVICE_NAME = "name"
+OPT_DEVICE_ADDRESS = "addr"
+
+# Config flow user input keys
+INP_DEVICE = "device"
+INP_DISCOVERED_DEVICES = "discovered_device"
+INP_DEVICE_ADD_DEVICE = "add_new"
+INP_DEVICE_DISCOVER_DEVICE = "discover_new"
+
+# Runtime data fields
+DATA_API_CLIENT = "prana_rc_client"
+DATA_ENTITIES = "entities"
+DATA_COORDINATOR = "coordinator"
+DATA_UNDO_UPDATE_CONF_UPDATE_LISTENER = "undo_config_update_listener"
+
+# Entity attributes
+ATTR_LAST_UPDATED = "last_updated"
