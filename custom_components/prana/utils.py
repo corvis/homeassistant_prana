@@ -1,11 +1,13 @@
 import hashlib
 import logging
+from typing import Dict
 
 from prana_rc.contrib.client.aiohttp import PranaRCAioHttpClient
 from prana_rc.contrib.client.common import PranaRCAsyncClient
-from typing import Dict
 
 from . import const
+
+PRANA_SPEEDS = ["Off", "Low", "2", "3", "4", "5", "6", "7", "8", "High"]
 
 
 def api_client_from_config(config: Dict) -> PranaRCAsyncClient:
@@ -22,3 +24,7 @@ def generate_unique_id(config: Dict):
     hash_alg.update(config[const.CONF_CONNECTION_TYPE].encode("utf-8"))
     hash_alg.update(config[const.CONF_BASE_URL].encode("utf-8"))
     return hash_alg.hexdigest()
+
+
+def speed_int_to_str(speed: int) -> str:
+    return PRANA_SPEEDS[speed]

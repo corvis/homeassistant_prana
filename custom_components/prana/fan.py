@@ -1,34 +1,34 @@
+import datetime
 import logging
+from typing import List, Tuple, Optional, Any
 
-from homeassistant.components.fan import FanEntity
+from homeassistant.components.fan import FanEntity, SUPPORT_SET_SPEED, SUPPORT_DIRECTION
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from prana_rc.contrib.api import SetStateDTO
+from prana_rc.contrib.client.common import PranaRCAsyncClient
+from prana_rc.entity import Speed
 
-# from prana_rc.contrib.client.common import PranaRCAsyncClient
-from typing import List
-
-from .entity import BasePranaEntityEntity
-from . import const
+from . import const, utils
+from .entity import BasePranaEntity, PranaEntity
 
 _LOGGER = logging.getLogger(__name__)
+UPDATE_INTERVAL = datetime.timedelta(seconds=30)
+PRANA_API_ATTEMPTS = 5
+PRANA_API_TIMEOUT = 5
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities, discovery_info=None):
-    # prana_client: PranaRCAsyncClient = hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_API_CLIENT]
-    entities: List[BasePranaEntityEntity] = []
+    prana_client: PranaRCAsyncClient = hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_API_CLIENT]
+    entities: List[BasePranaEntity] = []
 
-    if config_entry.get(const.CONF_CONNECTION_TYPE) == const.ConnectionType.REMOTE_HTTP_SERVER.value:
-        pass
-        #
-        # async def async_get_state():
-        #     try:
-        #         return await prana_client.get_state()
-
-        # Configure update coordinator
-        # coordinator = DataUpdateCoordinator(
-        #     hass, _LOGGER, update_method=
-        # )
-
+    if config_entry.data.get(const.CONF_CONNECTION_TYPE) == const.ConnectionType.REMOTE_HTTP_SERVER.value:
+        for device_config in config_entry.options.get(const.OPT_DEVICES, {}).values():
+            device_coordinator, device_entities = await setup_prana_device(
+                hass, prana_client, device_config, config_entry.data
+            )
+            entities += device_entities
     else:
         _LOGGER.warning(
             "Connection type {} is not yet supported. This config entry will be ignored.".format(
@@ -38,24 +38,129 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     if len(entities) > 0:
         async_add_entities(entities)
+        hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_ENTITIES] += entities
+        hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_MAIN_ENTITIES] += entities
+
     return True
 
 
-class PranaFan(FanEntity):
-    def __init__(self, hass: HomeAssistant, entity_id: str, entity_name):
-        self._unique_id = entity_id
-        self._name = entity_name
-        self._hass = hass
+async def setup_prana_device(
+    hass: HomeAssistant, prana_client: PranaRCAsyncClient, device_config: dict, hub_config: dict
+) -> Tuple[DataUpdateCoordinator, List[PranaEntity]]:
+    device_entities = []
+    entity_id = "prana_" + device_config[const.OPT_DEVICE_ADDRESS].replace(":", "_")
+    entity_name = device_config[const.OPT_DEVICE_NAME]
+
+    async def async_get_state():
+        try:
+            return await prana_client.get_state(
+                device_config[const.OPT_DEVICE_ADDRESS], timeout=PRANA_API_TIMEOUT, attempts=PRANA_API_ATTEMPTS
+            )
+        except Exception as e:
+            _LOGGER.warning("Can't read data from prana recuperator {} ({}): ".format(entity_name, entity_id) + str(e))
+            raise e
+
+    # Configure update coordinator
+    coordinator = DataUpdateCoordinator(
+        hass, _LOGGER, name=entity_id, update_method=async_get_state, update_interval=UPDATE_INTERVAL
+    )
+
+    main_entity = PranaFan(coordinator, prana_client, device_config, entity_id, entity_name)
+    device_entities.append(main_entity)
+
+    # Fetch initial data so we have data when entities subscribe
+    await coordinator.async_refresh()
+
+    return coordinator, device_entities
+
+
+class PranaFan(BasePranaEntity, FanEntity):
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        api_client: PranaRCAsyncClient,
+        device_config: dict,
+        base_entity_id: str,
+        base_entity_name,
+    ):
+        super().__init__(coordinator, api_client, device_config, base_entity_id, base_entity_name)
         _LOGGER.debug("Configured Prana main fan entity {}".format(self.name))
 
     @property
-    def unique_id(self):
-        return self._unique_id
+    def unique_id(self) -> str:
+        return self._base_entity_id
 
     @property
-    def name(self):
-        return self._name
+    def name(self) -> str:
+        return self._base_entity_name
 
     @property
-    def should_poll(self):
-        return True
+    def speed_list(self) -> list:
+        """Get the list of available speeds."""
+        return utils.PRANA_SPEEDS
+
+    @property
+    def is_on(self) -> Optional[bool]:
+        if self._prana_state is not None:
+            return self._prana_state.is_on
+        else:
+            return None
+
+    @property
+    def speed(self) -> Optional[str]:
+        if self._prana_state is not None:
+            return utils.speed_int_to_str(self._prana_state.speed_locked)
+        else:
+            return None
+
+    @property
+    def supported_features(self) -> int:
+        """Flag supported features."""
+        return SUPPORT_SET_SPEED | SUPPORT_DIRECTION
+
+    @property
+    def current_direction(self) -> Optional[str]:
+        state = self._prana_state
+        if state is None or not state.is_on:
+            return None
+        if state.flows_locked:
+            return const.DIRECTION_BOTH
+        else:
+            return const.DIRECTION_IN if state.is_input_fan_on else const.DIRECTION_OUT
+
+    @property
+    def state_attributes(self) -> dict:
+        state = self._prana_state
+        if state is None or not state.is_on:
+            return {}
+        attributes = super().state_attributes
+        in_speed, out_speed = state.speed_locked, state.speed_locked if state.is_on else (0, 0)
+        if not state.flows_locked:
+            in_speed = state.speed_in
+            out_speed = state.speed_out
+        attributes.update(
+            {
+                # const.ATTR_LAST_UPDATED: state.timestamp.isoformat()
+                const.ATTR_BRIGHTNESS: state.brightness,
+                const.ATTR_FLOWS_LOCKED: state.flows_locked,
+                const.ATTR_HEATING: state.mini_heating_enabled,
+                const.ATTR_WINTER_MODE_ON: state.winter_mode_enabled,
+                const.ATTR_IN_SPEED: in_speed,
+                const.ATTR_OUT_SPEED: out_speed,
+            }
+        )
+        return attributes
+
+    async def async_turn_on(self, speed: Optional[str] = "2", **kwargs):
+        """Turn on the fan."""
+        if speed == utils.PRANA_SPEEDS[0]:
+            await self.async_turn_off()
+        prana_speed = Speed.from_str(speed)
+        await self.api_client.set_state(self.device_address, SetStateDTO(speed=prana_speed))
+        await self.coordinator.async_refresh()
+        return self.is_on
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn onn the fan."""
+        await self.api_client.set_state(self.device_address, SetStateDTO(speed=Speed.OFF))
+        await self.coordinator.async_refresh()

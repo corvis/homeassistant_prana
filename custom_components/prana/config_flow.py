@@ -1,11 +1,11 @@
 import logging
 import urllib.parse
+from typing import Dict
 
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from prana_rc.contrib.client.common import PranaRCAsyncClient
-from typing import Dict
 
 from . import const, utils
 

@@ -3,7 +3,6 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, Config
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from . import const, utils
 
@@ -21,6 +20,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up Prana from a config entry."""
     _LOGGER.debug("Loading config entry {} (id: {})".format(config_entry.title, config_entry.entry_id))
     api_client = utils.api_client_from_config(config_entry.data)
+    await api_client.init()
 
     # Subscribe for changes to config entry
     undo_config_update_listener = config_entry.add_update_listener(update_config_listener)
@@ -30,6 +30,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         const.DATA_API_CLIENT: api_client,
         const.DATA_UNDO_UPDATE_CONF_UPDATE_LISTENER: undo_config_update_listener,
         const.DATA_ENTITIES: [],
+        const.DATA_MAIN_ENTITIES: [],
     }
 
     for component in const.PLATFORMS:
