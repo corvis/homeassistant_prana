@@ -1,14 +1,11 @@
-from typing import Optional, Dict, Any, Union
+from abc import ABCMeta
 
+from homeassistant.components.fan import FanEntity
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from prana_rc.contrib.api import PranaStateDTO
 from prana_rc.contrib.client.common import PranaRCAsyncClient
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .fan import PranaFan
+from typing import Optional, Dict, Any, Union
 
 from . import const
 
@@ -52,10 +49,14 @@ class BasePranaEntity(CoordinatorEntity):
         return False
 
 
+class BaseMainPranaFan(BasePranaEntity, FanEntity, metaclass=ABCMeta):
+    pass
+
+
 class PranaDependantEntity(Entity):
-    def __init__(self, prana_main_entity: PranaFan) -> None:
+    def __init__(self, prana_main_entity: BaseMainPranaFan) -> None:
         super().__init__()
-        self.main_entity: PranaFan = prana_main_entity
+        self.main_entity: BaseMainPranaFan = prana_main_entity
 
     @property
     def device_info(self) -> Optional[Dict[str, Any]]:

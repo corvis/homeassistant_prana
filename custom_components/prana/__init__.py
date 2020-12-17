@@ -3,7 +3,9 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, Config
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
+from custom_components.prana.entity import BaseMainPranaFan
 from . import const, utils
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,10 +33,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         const.DATA_UNDO_UPDATE_CONF_UPDATE_LISTENER: undo_config_update_listener,
         const.DATA_ENTITIES: [],
         const.DATA_MAIN_ENTITIES: [],
+        const.DATA_DISPATCHER_DISPOSERS: [],
     }
 
-    for component in const.PLATFORMS:
-        hass.async_create_task(hass.config_entries.async_forward_entry_setup(config_entry, component))
+    entry_data = hass.data[const.DOMAIN][config_entry.entry_id]
+
+    async def handle_main_entities_initialized():  # Initialize the rest of the platforms (supplementary entities)
+        for component in const.PLATFORMS[1:]:
+            hass.async_create_task(hass.config_entries.async_forward_entry_setup(config_entry, component))
+
+    entry_data[const.DATA_DISPATCHER_DISPOSERS].append(
+        async_dispatcher_connect(hass, const.SIGNAL_PRANA_MAIN_INITIALIZED, handle_main_entities_initialized)
+    )
+
+    # Run fan platform initialization
+    hass.async_create_task(hass.config_entries.async_forward_entry_setup(config_entry, const.PLATFORMS[0]))
 
     return True
 
@@ -62,6 +75,10 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     entry_data[const.DATA_ENTITIES] = []
 
     entry_data[const.DATA_UNDO_UPDATE_CONF_UPDATE_LISTENER]()
+
+    # Cancel dispatchers
+    for dispose in entry_data[const.DATA_DISPATCHER_DISPOSERS]:
+        dispose()
 
     if unload_ok:
         hass.data[const.DOMAIN].pop(config_entry.entry_id)

@@ -3,9 +3,11 @@ from enum import Enum
 # Common consts
 DOMAIN = "prana"
 PLATFORMS = (
-    "fan",
+    "fan",  # MUST BE THE FIRST IN THE LIST
     "switch",
 )
+
+SIGNAL_PRANA_MAIN_INITIALIZED = "prana_main_initialized"
 
 
 class ConnectionType(Enum):
@@ -35,6 +37,7 @@ INP_DEVICE_DISCOVER_DEVICE = "discover_new"
 DATA_API_CLIENT = "prana_rc_client"
 DATA_MAIN_ENTITIES = "main_entities"
 DATA_ENTITIES = "entities"
+DATA_DISPATCHER_DISPOSERS = "dispatcher_disposers"
 DATA_UNDO_UPDATE_CONF_UPDATE_LISTENER = "undo_config_update_listener"
 
 # Entity attributes

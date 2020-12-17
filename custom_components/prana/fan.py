@@ -1,8 +1,10 @@
 import datetime
 import logging
+
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from typing import List, Tuple, Optional, Any
 
-from homeassistant.components.fan import FanEntity, SUPPORT_SET_SPEED, SUPPORT_DIRECTION
+from homeassistant.components.fan import SUPPORT_SET_SPEED, SUPPORT_DIRECTION
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -11,7 +13,7 @@ from prana_rc.contrib.client.common import PranaRCAsyncClient
 from prana_rc.entity import Speed
 
 from . import const, utils
-from .entity import BasePranaEntity, PranaEntity
+from .entity import BasePranaEntity, PranaEntity, BaseMainPranaFan
 
 _LOGGER = logging.getLogger(__name__)
 UPDATE_INTERVAL = datetime.timedelta(seconds=30)
@@ -41,6 +43,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_ENTITIES] += entities
         hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_MAIN_ENTITIES] += entities
 
+    async_dispatcher_send(hass, const.SIGNAL_PRANA_MAIN_INITIALIZED)
+
     return True
 
 
@@ -65,7 +69,7 @@ async def setup_prana_device(
         hass, _LOGGER, name=entity_id, update_method=async_get_state, update_interval=UPDATE_INTERVAL
     )
 
-    main_entity = PranaFan(coordinator, prana_client, device_config, entity_id, entity_name)
+    main_entity = PranaMainFan(coordinator, prana_client, device_config, entity_id, entity_name)
     device_entities.append(main_entity)
 
     # Fetch initial data so we have data when entities subscribe
@@ -74,7 +78,7 @@ async def setup_prana_device(
     return coordinator, device_entities
 
 
-class PranaFan(BasePranaEntity, FanEntity):
+class PranaMainFan(BaseMainPranaFan):
     def __init__(
         self,
         coordinator: DataUpdateCoordinator,
