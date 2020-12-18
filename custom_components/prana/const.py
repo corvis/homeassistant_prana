@@ -2,10 +2,7 @@ from enum import Enum
 
 # Common consts
 DOMAIN = "prana"
-PLATFORMS = (
-    "fan",  # MUST BE THE FIRST IN THE LIST
-    "switch",
-)
+PLATFORMS = ("fan", "switch", "light")  # MUST BE THE FIRST IN THE LIST
 
 SIGNAL_PRANA_MAIN_INITIALIZED = "prana_main_initialized"
 

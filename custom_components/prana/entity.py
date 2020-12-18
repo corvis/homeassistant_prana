@@ -1,13 +1,13 @@
 from abc import ABCMeta
 
-from homeassistant.components.fan import FanEntity
+from homeassistant.components.fan import FanEntity, SUPPORT_SET_SPEED
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from prana_rc.contrib.api import PranaStateDTO
 from prana_rc.contrib.client.common import PranaRCAsyncClient
 from typing import Optional, Dict, Any, Union
 
-from . import const
+from . import const, utils
 
 PranaEntity = Union["BasePranaEntity", "PranaDependantEntity"]
 
@@ -61,3 +61,19 @@ class PranaDependantEntity(Entity):
     @property
     def device_info(self) -> Optional[Dict[str, Any]]:
         return self.main_entity.device_info
+
+    @property
+    def should_poll(self) -> bool:
+        return True
+
+
+class PranaSupplementaryFan(PranaDependantEntity, FanEntity):
+    @property
+    def supported_features(self) -> int:
+        """Flag supported features."""
+        return SUPPORT_SET_SPEED
+
+    @property
+    def speed_list(self) -> list:
+        """Get the list of available speeds."""
+        return utils.PRANA_SPEEDS

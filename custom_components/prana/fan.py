@@ -1,19 +1,18 @@
 import datetime
 import logging
 
-from homeassistant.helpers.dispatcher import async_dispatcher_send
-from typing import List, Tuple, Optional, Any
-
-from homeassistant.components.fan import SUPPORT_SET_SPEED, SUPPORT_DIRECTION
+from homeassistant.components.fan import SUPPORT_SET_SPEED
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from prana_rc.contrib.api import SetStateDTO
 from prana_rc.contrib.client.common import PranaRCAsyncClient
 from prana_rc.entity import Speed
+from typing import List, Tuple, Optional, Any
 
 from . import const, utils
-from .entity import BasePranaEntity, PranaEntity, BaseMainPranaFan
+from .entity import PranaEntity, BaseMainPranaFan, PranaSupplementaryFan
 
 _LOGGER = logging.getLogger(__name__)
 UPDATE_INTERVAL = datetime.timedelta(seconds=30)
@@ -23,7 +22,7 @@ PRANA_API_TIMEOUT = 5
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities, discovery_info=None):
     prana_client: PranaRCAsyncClient = hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_API_CLIENT]
-    entities: List[BasePranaEntity] = []
+    entities: List[PranaEntity] = []
 
     if config_entry.data.get(const.CONF_CONNECTION_TYPE) == const.ConnectionType.REMOTE_HTTP_SERVER.value:
         for device_config in config_entry.options.get(const.OPT_DEVICES, {}).values():
@@ -39,9 +38,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         )
 
     if len(entities) > 0:
-        async_add_entities(entities)
-        hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_ENTITIES] += entities
         hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_MAIN_ENTITIES] += entities
+        # At the moment we registered just main entities. Let's build supplementary fans
+        for main_entity in entities.copy():
+            entities.append(PranaInputFan(main_entity))
+            entities.append(PranaOutputFan(main_entity))
+        hass.data[const.DOMAIN][config_entry.entry_id][const.DATA_ENTITIES] += entities
+        async_add_entities(entities)
 
     async_dispatcher_send(hass, const.SIGNAL_PRANA_MAIN_INITIALIZED)
 
@@ -120,7 +123,7 @@ class PranaMainFan(BaseMainPranaFan):
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_SET_SPEED | SUPPORT_DIRECTION
+        return SUPPORT_SET_SPEED
 
     @property
     def current_direction(self) -> Optional[str]:
@@ -140,8 +143,8 @@ class PranaMainFan(BaseMainPranaFan):
         attributes = super().state_attributes
         in_speed, out_speed = state.speed_locked, state.speed_locked if state.is_on else (0, 0)
         if not state.flows_locked:
-            in_speed = state.speed_in
-            out_speed = state.speed_out
+            in_speed = state.speed_in if state.is_input_fan_on else 0
+            out_speed = state.speed_out if state.is_output_fan_on else 0
         attributes.update(
             {
                 # const.ATTR_LAST_UPDATED: state.timestamp.isoformat()
@@ -168,3 +171,53 @@ class PranaMainFan(BaseMainPranaFan):
         """Turn onn the fan."""
         await self.api_client.set_state(self.device_address, SetStateDTO(speed=Speed.OFF))
         await self.coordinator.async_refresh()
+
+
+class PranaInputFan(PranaSupplementaryFan):
+    @property
+    def unique_id(self) -> Optional[str]:
+        return self.main_entity.unique_id + "_input"
+
+    @property
+    def name(self) -> Optional[str]:
+        return self.main_entity.name + " Input"
+
+    @property
+    def is_on(self) -> bool:
+        return self.main_entity.state_attributes.get(const.ATTR_IN_SPEED, 0) != 0
+
+    @property
+    def speed(self) -> Optional[str]:
+        return utils.speed_int_to_str(self.main_entity.state_attributes.get(const.ATTR_IN_SPEED, utils.PRANA_SPEEDS[0]))
+
+    async def async_turn_on(self, speed: Optional[str] = "2", **kwargs) -> None:
+        pass  # Not supported yet
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        pass  # Not supported yet
+
+
+class PranaOutputFan(PranaSupplementaryFan):
+    @property
+    def unique_id(self) -> Optional[str]:
+        return self.main_entity.unique_id + "_output"
+
+    @property
+    def name(self) -> Optional[str]:
+        return self.main_entity.name + " Output"
+
+    @property
+    def is_on(self) -> bool:
+        return self.main_entity.state_attributes.get(const.ATTR_OUT_SPEED, 0) != 0
+
+    @property
+    def speed(self) -> Optional[str]:
+        return utils.speed_int_to_str(
+            self.main_entity.state_attributes.get(const.ATTR_OUT_SPEED, utils.PRANA_SPEEDS[0])
+        )
+
+    async def async_turn_on(self, speed: Optional[str] = "2", **kwargs) -> None:
+        pass  # Not supported yet
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        pass  # Not supported yet
