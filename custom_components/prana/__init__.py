@@ -71,7 +71,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         entry_data[const.DATA_API_CLIENT] = None
 
     # Remove entities from hass
-    await asyncio.gather(*[entity.async_remove() for entity in entry_data[const.DATA_ENTITIES]])
+    # await asyncio.gather(*[entity.async_remove() for entity in entry_data[const.DATA_ENTITIES]])
     entry_data[const.DATA_ENTITIES] = []
 
     entry_data[const.DATA_UNDO_UPDATE_CONF_UPDATE_LISTENER]()

@@ -7,7 +7,7 @@
     "@corvis"
   ],
   "requirements": [
-    "prana-rc.client>=0.3.7"
+    "prana-rc.client>=0.3.11"
   ],
   "config_flow": true
 }

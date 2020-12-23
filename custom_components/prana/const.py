@@ -6,6 +6,7 @@ PLATFORMS = ("fan", "switch", "light")  # MUST BE THE FIRST IN THE LIST
 
 SIGNAL_PRANA_MAIN_INITIALIZED = "prana_main_initialized"
 
+PRANA_DISCOVERY_TIMEOUT = 10
 
 class ConnectionType(Enum):
     LOCAL_BLE = "local_ble"
@@ -20,6 +21,7 @@ CONF_BASE_URL = "base_url"
 CONNECTION_TYPE_MAP = {ConnectionType.REMOTE_HTTP_SERVER: "HTTP"}
 
 # Options
+OPT_LAST_UPDATE = "_timestamp"
 OPT_DEVICES = "devices"
 OPT_DEVICE_NAME = "name"
 OPT_DEVICE_ADDRESS = "addr"

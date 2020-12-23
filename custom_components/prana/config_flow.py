@@ -1,3 +1,4 @@
+import datetime
 import logging
 import urllib.parse
 from typing import Dict
@@ -90,6 +91,7 @@ class PranaOptionsFlowHandler(config_entries.OptionsFlow):
         result = dict(self.current_options)
         addr = value[const.OPT_DEVICE_ADDRESS] = value[const.OPT_DEVICE_ADDRESS].strip()
         result[const.OPT_DEVICES][addr] = value
+        result[const.OPT_LAST_UPDATE] = int(datetime.datetime.now().timestamp())
         return self.async_create_entry(
             title="",
             data=result,
@@ -149,7 +151,8 @@ class PranaOptionsFlowHandler(config_entries.OptionsFlow):
                 return self.preserve_options_section(user_input)
         else:
             # We came here from the discover dialog
-            current = user_input  # type: ignore
+            if user_input is not None:
+                current = user_input  # type: ignore
 
         schema_dict = {
             vol.Required(
@@ -179,7 +182,7 @@ class PranaOptionsFlowHandler(config_entries.OptionsFlow):
         prana_client: PranaRCAsyncClient = utils.api_client_from_config(self.config_entry.data)
         async with prana_client as c:
             try:
-                discovered_devs = await c.discover()
+                discovered_devs = (await c.discover(timeout=const.PRANA_DISCOVERY_TIMEOUT)) or []
                 devs_options = {
                     "{}/{}".format(x["address"], x["name"]): "{} [{}]".format(x["name"], x["address"])
                     for x in discovered_devs
