@@ -188,7 +188,7 @@ class PranaInputFan(PranaSupplementaryFan):
 
     @property
     def speed(self) -> Optional[str]:
-        return utils.speed_int_to_str(self.main_entity.state_attributes.get(const.ATTR_IN_SPEED, utils.PRANA_SPEEDS[0]))
+        return utils.speed_int_to_str(self.main_entity.state_attributes.get(const.ATTR_IN_SPEED, 0))
 
     async def async_turn_on(self, speed: Optional[str] = "2", **kwargs) -> None:
         pass  # Not supported yet
