@@ -14,23 +14,12 @@ from . import const, utils
 PranaEntity = Union["BasePranaEntity", "PranaDependantEntity"]
 
 
-class BasePranaEntity(Entity):
-    """Parent class for Prana entities"""
+class CoordinatorEntity(Entity):
+    """A class for entities using DataUpdateCoordinator."""
 
-    def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        api_client: PranaRCAsyncClient,
-        device_config: dict,
-        base_entity_id: str,
-        base_entity_name: str,
-    ):
-        super().__init__()
+    def __init__(self, coordinator: DataUpdateCoordinator) -> None:
+        """Create the entity with a DataUpdateCoordinator."""
         self.coordinator = coordinator
-        self._base_entity_id = base_entity_id
-        self._base_entity_name = base_entity_name
-        self._device_config = device_config
-        self.api_client = api_client
 
     @property
     def should_poll(self) -> bool:
@@ -64,6 +53,25 @@ class BasePranaEntity(Entity):
 
         await self.coordinator.async_request_refresh()
 
+
+class BasePranaEntity(CoordinatorEntity):
+    """Parent class for Prana entities"""
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        api_client: PranaRCAsyncClient,
+        device_config: dict,
+        base_entity_id: str,
+        base_entity_name: str,
+    ):
+        super().__init__(coordinator)
+        self.coordinator = coordinator
+        self._base_entity_id = base_entity_id
+        self._base_entity_name = base_entity_name
+        self._device_config = device_config
+        self.api_client = api_client
+
     @property
     def _prana_state(self) -> PranaStateDTO:
         return self.coordinator.data
@@ -89,9 +97,9 @@ class BaseMainPranaFan(BasePranaEntity, FanEntity, metaclass=ABCMeta):
     pass
 
 
-class PranaDependantEntity(Entity):
+class PranaDependantEntity(CoordinatorEntity):
     def __init__(self, prana_main_entity: BaseMainPranaFan) -> None:
-        super().__init__()
+        super().__init__(prana_main_entity.coordinator)
         self.main_entity: BaseMainPranaFan = prana_main_entity
 
     @property
