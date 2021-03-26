@@ -4,6 +4,7 @@ PYPI_API_KEY :=
 PYPI_REPOSITORY_URL :=
 ALPHA_VERSION :=
 
+SHELL := /bin/bash
 .DEFAULT_GOAL := pre_commit
 
 pre_commit: format lint
@@ -38,3 +39,10 @@ format:
        black ./custom_components/prana; \
        echo "DONE: Black"; \
     )
+
+venv:
+	@( \
+		virtualenv $(VIRTUAL_ENV_PATH); \
+		source ./venv/bin/activate; \
+		pip install -r ./requirements.txt; \
+	)

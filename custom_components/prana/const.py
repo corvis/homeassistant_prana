@@ -8,6 +8,7 @@ SIGNAL_PRANA_MAIN_INITIALIZED = "prana_main_initialized"
 
 PRANA_DISCOVERY_TIMEOUT = 10
 
+
 class ConnectionType(Enum):
     LOCAL_BLE = "local_ble"
     REMOTE_HTTP_SERVER = "remote_http"

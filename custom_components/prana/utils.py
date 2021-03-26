@@ -8,6 +8,7 @@ from prana_rc.contrib.client.common import PranaRCAsyncClient
 from . import const
 
 PRANA_SPEEDS = ["Off", "Low", "2", "3", "4", "5", "6", "7", "8", "High"]
+PRANA_DEFAULT_SPEED = "2"
 
 
 def api_client_from_config(config: Dict) -> PranaRCAsyncClient:
@@ -28,3 +29,9 @@ def generate_unique_id(config: Dict):
 
 def speed_int_to_str(speed: int) -> str:
     return PRANA_SPEEDS[speed]
+
+
+def percentage_to_speed(percentage: int) -> str:
+    if percentage == 0:
+        return PRANA_SPEEDS[0]
+    return PRANA_SPEEDS[int(percentage / len(PRANA_SPEEDS))]

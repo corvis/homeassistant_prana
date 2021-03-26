@@ -1,7 +1,7 @@
 import datetime
 import logging
+from typing import List, Tuple, Optional, Any
 
-from homeassistant.components.fan import SUPPORT_SET_SPEED
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -9,7 +9,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from prana_rc.contrib.api import SetStateDTO
 from prana_rc.contrib.client.common import PranaRCAsyncClient
 from prana_rc.entity import Speed
-from typing import List, Tuple, Optional, Any
 
 from . import const, utils
 from .entity import PranaEntity, BaseMainPranaFan, PranaSupplementaryFan
@@ -102,11 +101,6 @@ class PranaMainFan(BaseMainPranaFan):
         return self._base_entity_name
 
     @property
-    def speed_list(self) -> list:
-        """Get the list of available speeds."""
-        return utils.PRANA_SPEEDS
-
-    @property
     def is_on(self) -> Optional[bool]:
         if self._prana_state is not None:
             return self._prana_state.is_on
@@ -120,10 +114,12 @@ class PranaMainFan(BaseMainPranaFan):
         else:
             return None
 
-    @property
-    def supported_features(self) -> int:
-        """Flag supported features."""
-        return SUPPORT_SET_SPEED
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        if preset_mode == utils.PRANA_SPEEDS[0]:
+            await self.async_turn_off()
+        prana_speed = Speed.from_str(preset_mode if preset_mode is not None else utils.PRANA_DEFAULT_SPEED)
+        await self.api_client.set_state(self.device_address, SetStateDTO(speed=prana_speed))
+        await self.coordinator.async_refresh()
 
     @property
     def current_direction(self) -> Optional[str]:
@@ -160,11 +156,7 @@ class PranaMainFan(BaseMainPranaFan):
 
     async def async_turn_on(self, speed: Optional[str] = "2", **kwargs):
         """Turn on the fan."""
-        if speed == utils.PRANA_SPEEDS[0]:
-            await self.async_turn_off()
-        prana_speed = Speed.from_str(speed)
-        await self.api_client.set_state(self.device_address, SetStateDTO(speed=prana_speed))
-        await self.coordinator.async_refresh()
+        await self.async_set_preset_mode(speed or utils.PRANA_DEFAULT_SPEED)
         return self.is_on
 
     async def async_turn_off(self, **kwargs: Any) -> None:

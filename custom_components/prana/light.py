@@ -1,7 +1,8 @@
+from typing import List, Optional, Any
+
 from homeassistant.components.light import LightEntity, SUPPORT_BRIGHTNESS
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from typing import List, Optional, Any
 
 from custom_components.prana import const
 from custom_components.prana.entity import PranaDependantEntity
