@@ -43,8 +43,8 @@ Once the device is configured the integration will register a bunch of entities:
 - Separate flows management is not yet implemented (read-only)
 
 ## Credits
-Dmitry Berezovsky, author
-Prana RC, interfacing library to communicate with Prana hardware via BLE.
+* Dmitry Berezovsky, author
+* Prana RC, interfacing library to communicate with Prana hardware via BLE.
 
 ## Disclaimer
 This module is licensed under GPL v3. This means you are free to use in non-commercial projects.
