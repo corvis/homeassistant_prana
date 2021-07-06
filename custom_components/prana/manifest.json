@@ -2,6 +2,7 @@
   "domain": "prana",
   "name": "Prana Recuperators",
   "documentation": "",
+  "version": "0.2.0",
   "dependencies": [],
   "codeowners": [
     "@corvis"

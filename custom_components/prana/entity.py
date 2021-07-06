@@ -3,7 +3,7 @@ from typing import Optional, Dict, Any, Union
 
 from homeassistant.components.fan import FanEntity, SUPPORT_SET_SPEED
 from homeassistant.core import callback
-from homeassistant.helpers.device_registry import IDX_IDENTIFIERS
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from prana_rc.contrib.api import PranaStateDTO
@@ -59,12 +59,12 @@ class BasePranaEntity(CoordinatorEntity):
     """Parent class for Prana entities"""
 
     def __init__(
-        self,
-        coordinator: DataUpdateCoordinator,
-        api_client: PranaRCAsyncClient,
-        device_config: dict,
-        base_entity_id: str,
-        base_entity_name: str,
+            self,
+            coordinator: DataUpdateCoordinator,
+            api_client: PranaRCAsyncClient,
+            device_config: dict,
+            base_entity_id: str,
+            base_entity_name: str,
     ):
         super().__init__(coordinator)
         self.coordinator = coordinator
@@ -82,12 +82,12 @@ class BasePranaEntity(CoordinatorEntity):
         return self._device_config[const.OPT_DEVICE_ADDRESS]
 
     @property
-    def device_info(self) -> Optional[Dict[str, Any]]:
-        return {
-            IDX_IDENTIFIERS: {(const.DOMAIN, self.unique_id)},
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo({
+            'identifiers': {(const.DOMAIN, self.unique_id)},
             const.ATTR_DEVICE_ADDRESS: self._device_config.get(const.OPT_DEVICE_ADDRESS),
             const.ATTR_DEVICE_NAME: self._device_config.get(const.OPT_DEVICE_NAME),
-        }
+        })
 
     @property
     def assumed_state(self) -> bool:
