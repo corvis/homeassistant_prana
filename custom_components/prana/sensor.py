@@ -111,7 +111,7 @@ class PranaAirTemperatureIn(PranaDependantEntity, SensorEntity):
 
     @property
     def name(self) -> Optional[str]:
-        return self.main_entity.name + " Temperature Out"
+        return self.main_entity.name + " Temperature In"
 
     @property
     def native_value(self):
