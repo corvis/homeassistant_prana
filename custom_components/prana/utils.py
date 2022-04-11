@@ -7,7 +7,7 @@ from prana_rc.contrib.client.common import PranaRCAsyncClient
 
 from . import const
 
-PRANA_SPEEDS = ["Off", "Low", "2", "3", "4", "5", "6", "7", "8", "High"]
+PRANA_SPEEDS = ["Off", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 PRANA_DEFAULT_SPEED = "2"
 
 

@@ -2,11 +2,11 @@ from enum import Enum
 
 # Common consts
 DOMAIN = "prana"
-PLATFORMS = ("fan", "switch", "light")  # MUST BE THE FIRST IN THE LIST
+PLATFORMS = ("fan", "switch", "light", "sensor")  # MUST BE THE FIRST IN THE LIST
 
 SIGNAL_PRANA_MAIN_INITIALIZED = "prana_main_initialized"
 
-PRANA_DISCOVERY_TIMEOUT = 10
+PRANA_DISCOVERY_TIMEOUT = 16
 
 
 class ConnectionType(Enum):
@@ -48,6 +48,12 @@ ATTR_OUT_SPEED = "output_speed"
 ATTR_WINTER_MODE_ON = "winter_mode"
 ATTR_HEATING = "heating"
 ATTR_BRIGHTNESS = "brightness"
+ATTR_SENSOR_TEMPERATURE_IN = "temperature_in"
+ATTR_SENSOR_TEMPERATURE_OUT = "temperature_out"
+ATTR_SENSOR_HUMIDITY = "humidity"
+ATTR_SENSOR_PRESSURE = "pressure"
+ATTR_SENSOR_VOC = "voc"
+ATTR_SENSOR_CO2 = "co2"
 
 # Device attributes
 ATTR_DEVICE_ADDRESS = "ble_address"

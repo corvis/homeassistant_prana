@@ -148,6 +148,12 @@ class PranaMainFan(BaseMainPranaFan):
                 const.ATTR_FLOWS_LOCKED: state.flows_locked,
                 const.ATTR_HEATING: state.mini_heating_enabled,
                 const.ATTR_WINTER_MODE_ON: state.winter_mode_enabled,
+                const.ATTR_SENSOR_TEMPERATURE_IN: state.sensors.temperature_in,
+                const.ATTR_SENSOR_TEMPERATURE_OUT: state.sensors.temperature_out,
+                const.ATTR_SENSOR_HUMIDITY: state.sensors.humidity,
+                const.ATTR_SENSOR_PRESSURE: state.sensors.pressure,
+                const.ATTR_SENSOR_VOC: state.sensors.voc,
+                const.ATTR_SENSOR_CO2: state.sensors.co2,
                 const.ATTR_IN_SPEED: in_speed,
                 const.ATTR_OUT_SPEED: out_speed,
             }
