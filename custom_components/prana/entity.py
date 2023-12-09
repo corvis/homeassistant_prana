@@ -3,12 +3,14 @@ from typing import Optional, Dict, Any, Union
 
 from homeassistant.components.fan import FanEntity, SUPPORT_SET_SPEED
 from homeassistant.core import callback
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from prana_rc.contrib.api import PranaStateDTO
 from prana_rc.contrib.client.common import PranaRCAsyncClient
 from prana_rc.entity import Speed
+
+from homeassistant.helpers import device_registry as dr
 
 from . import const, utils
 
@@ -83,11 +85,11 @@ class BasePranaEntity(CoordinatorEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        return DeviceInfo({
-            'identifiers': {(const.DOMAIN, self.unique_id)},
-            const.ATTR_DEVICE_ADDRESS: self._device_config.get(const.OPT_DEVICE_ADDRESS),
-            const.ATTR_DEVICE_NAME: self._device_config.get(const.OPT_DEVICE_NAME),
-        })
+        return DeviceInfo(
+            identifiers={(const.DOMAIN, self.unique_id)},
+            name=self._device_config.get(const.OPT_DEVICE_NAME),
+            connections={(dr.CONNECTION_BLUETOOTH, self._device_config.get(const.OPT_DEVICE_ADDRESS))},
+        )
 
     @property
     def assumed_state(self) -> bool:
