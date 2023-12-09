@@ -49,10 +49,6 @@ ATTR_WINTER_MODE_ON = "winter_mode"
 ATTR_HEATING = "heating"
 ATTR_BRIGHTNESS = "brightness"
 
-# Device attributes
-ATTR_DEVICE_ADDRESS = "ble_address"
-ATTR_DEVICE_NAME = "name"
-
 # Other
 DIRECTION_IN = "in"
 DIRECTION_OUT = "out"
